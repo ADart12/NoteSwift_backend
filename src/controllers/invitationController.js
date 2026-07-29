@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import Invitation from "../models/invitationModel.js";
 import User from "../models/usersModel.js";
-// import { resend } from "../config/resend.js"; 
+import { resend } from "../cofig/resend.js";
+
 
 export const sendInvitation = async (req, res) => {
     try {
@@ -59,21 +60,22 @@ export const sendInvitation = async (req, res) => {
             `${process.env.CLIENT_URL}/register?token=${token}`;
 
         // Send email
-    //     await resend.emails.send({
-    //         from: process.env.RESEND_FROM_EMAIL,
-    //         to: email,
-    //         subject: "You're invited",
-    //         html: `
-    //     <h2>Welcome!</h2>
-    //     <p>You have been invited to join the Attendance Management System.</p>
+        await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL,
+            to: email,
+            subject: "You're invited",
+            html: `
+        <h2>Welcome!</h2>
+        <p>You have been invited to join the Employee Management System.</p>
+        <p>NoteSwift P.V.T</P>
 
-        // <a href="${invitationLink}">
-    //       Complete Registration
-    //     </a>
+        <a href="${invitationLink}">
+          Complete Registration
+        </a>
 
-    //     <p>This link expires in 24 hours.</p>
-    //   `,
-    //     });
+        <p>This link expires in 24 hours.</p>
+      `,
+        });
 
         return res.status(200).json({
             success: true,
@@ -90,4 +92,45 @@ export const sendInvitation = async (req, res) => {
             message: "Server Error",
         });
     }
+};
+
+export const validateInvitation = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    const invitation = await Invitation.findOne({
+      token,
+      used: false,
+    });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid invitation.",
+      });
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "Invitation has expired.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      employeeId: invitation.employeeId,
+      fullName: invitation.fullName,
+      email: invitation.email,
+      phone: invitation.phone,
+      department: invitation.department,
+      designation: invitation.designation,
+      role: invitation.role,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
 };
