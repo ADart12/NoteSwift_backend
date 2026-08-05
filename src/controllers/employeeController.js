@@ -37,13 +37,16 @@ export const getEmployees = async (req, res) => {
       query.status = status;
     }
 
-    const skip = (page - 1) * limit;
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    const skip = (pageNumber - 1) * limitNumber;
 
     const employees = await User.find(query)
       .select("-password")
       .skip(skip)
       .limit(Number(limit))
-      .sort({ createdAt: -      1 });
+      .sort({ createdAt: -1 });
 
     const totalEmployees = await User.countDocuments(query);
 

@@ -10,13 +10,7 @@ const leaveSchema = new mongoose.Schema(
 
     leaveType: {
       type: String,
-      enum: [
-        "Sick Leave",
-        "Casual Leave",
-        "Annual Leave",
-        "Emergency Leave",
-        "Unpaid Leave",
-      ],
+      enum: ["Casual", "Sick", "Annual", "Maternity", "Paternity", "Unpaid", "Other"],
       required: true,
     },
 
@@ -30,10 +24,16 @@ const leaveSchema = new mongoose.Schema(
       required: true,
     },
 
+    days: {
+      type: Number,
+      required: true,
+    },
+
     reason: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 500,
     },
 
     status: {
@@ -42,9 +42,20 @@ const leaveSchema = new mongoose.Schema(
       default: "Pending",
     },
 
+    remarks: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
+    },
+
+    approvedAt: {
+      type: Date,
       default: null,
     },
   },
@@ -53,6 +64,4 @@ const leaveSchema = new mongoose.Schema(
   }
 );
 
-const Leave = mongoose.model("Leave", leaveSchema);
-
-export default Leave;
+export default mongoose.model("Leave", leaveSchema);

@@ -6,6 +6,7 @@ import invitationRoutes from "./routes/invitationRoutes.js";
 import employeeRoutes from './routes/employeeRoutes.js';
 import attendenceRoutes from './routes/attendenceRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js'
+import leaveRoutes from "./routes/leaveRoutes.js"
 
 const app = express();
 
@@ -27,5 +28,9 @@ app.use("/api/employee", employeeRoutes);
 app.use('/api/attendence', attendenceRoutes)
 
 app.use("/api/dashboard", dashboardRoutes);
+
+
+// leaves 
+app.use("/api/leave", leaveRoutes)
 
 export default app;
