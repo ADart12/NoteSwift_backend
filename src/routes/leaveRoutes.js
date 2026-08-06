@@ -7,7 +7,8 @@ import {
   getAllLeaves,
   getLeaveById,
   rejectLeave,
-  approveLeave
+  approveLeave,
+  getLeaveSummary
 } from "../controllers/leaveController.js";
 import protect from "../middleware/authMiddleware.js";
 import {authorizeRoles} from "../middleware/authorizeRole.js";
@@ -27,6 +28,8 @@ router.delete("/:id",protect, authorizeRoles("employee"), deleteLeave);
 
 // HR/Admin Routes
 router.get("/",protect, authorizeRoles("admin", "hr"), getAllLeaves);
+
+router.get("/summary",protect, authorizeRoles("admin", "hr"), getLeaveSummary);
 
 router.get("/:id",protect,authorizeRoles("admin", "hr"),getLeaveById);
 

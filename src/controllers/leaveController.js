@@ -169,14 +169,13 @@ export const deleteLeave = async (req, res) => {
 
 
 
-
 export const getAllLeaves = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status = "all" } = req.query;
 
         const filter = {};
 
-        if (status) {
+        if (status !== "all") {
             filter.status = status;
         }
 
@@ -286,54 +285,135 @@ export const rejectLeave = async (req, res) => {
 
 
 export const approveLeave = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { remarks } = req.body;
+
+        const leave = await Leave.findById(id);
+
+        if (!leave) {
+            return res.status(404).json({
+                success: false,
+                message: "Leave request not found.",
+            });
+        }
+
+        if (leave.status !== "Pending") {
+            return res.status(400).json({
+                success: false,
+                message: `Leave has already been ${leave.status.toLowerCase()}.`,
+            });
+        }
+
+        leave.status = "Approved";
+        leave.approvedBy = req.user._id; // or req.user.id depending on your protect middleware
+        leave.approvedAt = new Date();
+        leave.remarks = remarks || "";
+
+        await leave.save();
+
+        const updatedLeave = await Leave.findById(leave._id)
+            .populate(
+                "employee",
+                "employeeId fullName email department designation"
+            )
+            .populate(
+                "approvedBy",
+                "employeeId fullName role"
+            );
+
+        return res.status(200).json({
+            success: true,
+            message: "Leave approved successfully.",
+            leave: updatedLeave,
+        });
+    } catch (error) {
+        console.error("Approve Leave Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error.",
+        });
+    }
+};
+
+
+
+export const getLeaveSummary = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { remarks } = req.body;
+    const leaves = await Leave.find();
 
-    const leave = await Leave.findById(id);
+    const summary = {
+      total: leaves.length,
 
-    if (!leave) {
-      return res.status(404).json({
-        success: false,
-        message: "Leave request not found.",
-      });
-    }
+      // Status
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      cancelled: 0,
 
-    if (leave.status !== "Pending") {
-      return res.status(400).json({
-        success: false,
-        message: `Leave has already been ${leave.status.toLowerCase()}.`,
-      });
-    }
+      // Leave Types
+      casual: 0,
+      sick: 0,
+      annual: 0,
+      maternity: 0,
+      paternity: 0,
+      unpaid: 0,
+      other: 0,
+    };
 
-    leave.status = "Approved";
-    leave.approvedBy = req.user._id; // or req.user.id depending on your protect middleware
-    leave.approvedAt = new Date();
-    leave.remarks = remarks || "";
+    leaves.forEach((leave) => {
+      // Status counts
+      switch (leave.status) {
+        case "Pending":
+          summary.pending++;
+          break;
+        case "Approved":
+          summary.approved++;
+          break;
+        case "Rejected":
+          summary.rejected++;
+          break;
+        case "Cancelled":
+          summary.cancelled++;
+          break;
+      }
 
-    await leave.save();
-
-    const updatedLeave = await Leave.findById(leave._id)
-      .populate(
-        "employee",
-        "employeeId fullName email department designation"
-      )
-      .populate(
-        "approvedBy",
-        "employeeId fullName role"
-      );
+      // Leave type counts
+      switch (leave.leaveType) {
+        case "Casual":
+          summary.casual++;
+          break;
+        case "Sick":
+          summary.sick++;
+          break;
+        case "Annual":
+          summary.annual++;
+          break;
+        case "Maternity":
+          summary.maternity++;
+          break;
+        case "Paternity":
+          summary.paternity++;
+          break;
+        case "Unpaid":
+          summary.unpaid++;
+          break;
+        case "Other":
+          summary.other++;
+          break;
+      }
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Leave approved successfully.",
-      leave: updatedLeave,
+      summary,
     });
   } catch (error) {
-    console.error("Approve Leave Error:", error);
-
+    console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error.",
+      message: "Failed to fetch leave summary",
     });
   }
 };
