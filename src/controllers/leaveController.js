@@ -1,4 +1,5 @@
 import Leave from "../models/leaveModel.js";
+import User from "../models/usersModel.js"
 
 export const applyLeave = async (req, res) => {
     try {
@@ -171,18 +172,89 @@ export const deleteLeave = async (req, res) => {
 
 export const getAllLeaves = async (req, res) => {
     try {
-        const { status = "all" } = req.query;
+        const {
+            search = "",
+            department = "",
+            leaveType = "",
+            status = "Pending",
+        } = req.query;
 
         const filter = {};
 
+        // =========================
+        // Status Filter
+        // =========================
         if (status !== "all") {
             filter.status = status;
         }
 
+        // =========================
+        // Leave Type Filter
+        // =========================
+        if (leaveType) {
+            filter.leaveType = leaveType;
+        }
+
+        // =========================
+        // Employee Department Filter
+        // =========================
+        if (department) {
+            const employees = await User.find({
+                department: department,
+            }).select("_id");
+
+            const employeeIds = employees.map(
+                (employee) => employee._id
+            );
+
+            filter.employee = {
+                $in: employeeIds,
+            };
+        }
+
+        // =========================
+        // Search Employee
+        // =========================
+        if (search) {
+            const employees = await User.find({
+                $or: [
+                    {
+                        fullName: {
+                            $regex: search,
+                            $options: "i",
+                        },
+                    },
+                    {
+                        employeeId: {
+                            $regex: search,
+                            $options: "i",
+                        },
+                    },
+                    {
+                        email: {
+                            $regex: search,
+                            $options: "i",
+                        },
+                    },
+                ],
+            }).select("_id");
+
+            const employeeIds = employees.map(
+                (employee) => employee._id
+            );
+
+            filter.employee = {
+                $in: employeeIds,
+            };
+        }
+
+        // =========================
+        // Get Leaves
+        // =========================
         const leaves = await Leave.find(filter)
             .populate(
                 "employee",
-                "employeeId fullName email department designation"
+                "fullName email department designation"
             )
             .sort({ createdAt: -1 });
 
@@ -191,6 +263,7 @@ export const getAllLeaves = async (req, res) => {
             count: leaves.length,
             leaves,
         });
+
     } catch (error) {
         console.error("Get All Leaves Error:", error);
 
@@ -239,7 +312,7 @@ export const getLeaveById = async (req, res) => {
 export const rejectLeave = async (req, res) => {
     try {
         const { id } = req.params;
-        const { remarks } = req.body;
+        // const { remarks } = req.body;
 
         const leave = await Leave.findById(id);
 
@@ -261,9 +334,9 @@ export const rejectLeave = async (req, res) => {
         leave.approvedBy = req.user.id;
         leave.approvedAt = new Date();
 
-        if (remarks) {
-            leave.remarks = remarks;
-        }
+        // if (remarks) {
+        //     leave.remarks = remarks;
+        // }
 
         await leave.save();
 
@@ -287,7 +360,7 @@ export const rejectLeave = async (req, res) => {
 export const approveLeave = async (req, res) => {
     try {
         const { id } = req.params;
-        const { remarks } = req.body;
+        // const { remarks } = req.body;
 
         const leave = await Leave.findById(id);
 
@@ -308,7 +381,7 @@ export const approveLeave = async (req, res) => {
         leave.status = "Approved";
         leave.approvedBy = req.user._id; // or req.user.id depending on your protect middleware
         leave.approvedAt = new Date();
-        leave.remarks = remarks || "";
+        // leave.remarks = remarks || "";
 
         await leave.save();
 
@@ -340,80 +413,80 @@ export const approveLeave = async (req, res) => {
 
 
 export const getLeaveSummary = async (req, res) => {
-  try {
-    const leaves = await Leave.find();
+    try {
+        const leaves = await Leave.find();
 
-    const summary = {
-      total: leaves.length,
+        const summary = {
+            total: leaves.length,
 
-      // Status
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      cancelled: 0,
+            // Status
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+            cancelled: 0,
 
-      // Leave Types
-      casual: 0,
-      sick: 0,
-      annual: 0,
-      maternity: 0,
-      paternity: 0,
-      unpaid: 0,
-      other: 0,
-    };
+            // Leave Types
+            casual: 0,
+            sick: 0,
+            annual: 0,
+            maternity: 0,
+            paternity: 0,
+            unpaid: 0,
+            other: 0,
+        };
 
-    leaves.forEach((leave) => {
-      // Status counts
-      switch (leave.status) {
-        case "Pending":
-          summary.pending++;
-          break;
-        case "Approved":
-          summary.approved++;
-          break;
-        case "Rejected":
-          summary.rejected++;
-          break;
-        case "Cancelled":
-          summary.cancelled++;
-          break;
-      }
+        leaves.forEach((leave) => {
+            // Status counts
+            switch (leave.status) {
+                case "Pending":
+                    summary.pending++;
+                    break;
+                case "Approved":
+                    summary.approved++;
+                    break;
+                case "Rejected":
+                    summary.rejected++;
+                    break;
+                case "Cancelled":
+                    summary.cancelled++;
+                    break;
+            }
 
-      // Leave type counts
-      switch (leave.leaveType) {
-        case "Casual":
-          summary.casual++;
-          break;
-        case "Sick":
-          summary.sick++;
-          break;
-        case "Annual":
-          summary.annual++;
-          break;
-        case "Maternity":
-          summary.maternity++;
-          break;
-        case "Paternity":
-          summary.paternity++;
-          break;
-        case "Unpaid":
-          summary.unpaid++;
-          break;
-        case "Other":
-          summary.other++;
-          break;
-      }
-    });
+            // Leave type counts
+            switch (leave.leaveType) {
+                case "Casual":
+                    summary.casual++;
+                    break;
+                case "Sick":
+                    summary.sick++;
+                    break;
+                case "Annual":
+                    summary.annual++;
+                    break;
+                case "Maternity":
+                    summary.maternity++;
+                    break;
+                case "Paternity":
+                    summary.paternity++;
+                    break;
+                case "Unpaid":
+                    summary.unpaid++;
+                    break;
+                case "Other":
+                    summary.other++;
+                    break;
+            }
+        });
 
-    return res.status(200).json({
-      success: true,
-      summary,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch leave summary",
-    });
-  }
+        return res.status(200).json({
+            success: true,
+            summary,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch leave summary",
+        });
+    }
 };

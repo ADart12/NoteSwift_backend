@@ -9,7 +9,7 @@ export const getDashboardSummary = async (req, res) => {
 
     const [totalEmployees, presentToday,] = await Promise.all([
       User.countDocuments({
-        role: { $in: ["employee", "hr"] },
+        role: { $in: ["employee", "hr", "admin"] },
         status: "active",
       }),
 
@@ -57,7 +57,7 @@ export const getDashboardSummary = async (req, res) => {
 
 export const getAttendanceOverview = async (req, res) => {
   try {
-    const { range = "1m" } = req.query;
+    const { range = "10d" } = req.query;
 
     const { startDate, endDate } = getDateRange(range);
 

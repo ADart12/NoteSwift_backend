@@ -208,6 +208,7 @@ export const deleteEmployee = async (req, res) => {
     }
 
     employee.isDeleted = true;
+    employee.status = "inactive";
 
     await employee.save();
 
