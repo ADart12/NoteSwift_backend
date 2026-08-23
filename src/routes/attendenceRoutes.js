@@ -10,6 +10,7 @@ import {
 
 import authMiddleware from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/authorizeRole.js";
+import { authorizeDepartment } from "../middleware/authorizeDepartment.js";
 
 const router = express.Router();
 
@@ -25,13 +26,13 @@ router.get("/me/history", authMiddleware, getMyAttendanceHistory);
    HR / Admin Routes
 ============================ */
 
-router.post("/check-in",authMiddleware, authorizeRoles("admin", "hr"), checkIn );
+router.post("/check-in",authMiddleware, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), checkIn );
 
-router.patch("/check-out", authMiddleware, authorizeRoles("admin", "hr"), checkOut);
+router.patch("/check-out", authMiddleware, authorizeRoles("admin", "manager"),authorizeDepartment("HR"), checkOut);
 
 
-router.get("/today", authMiddleware, authorizeRoles("admin", "hr"), getTodayAttendance);
+router.get("/today", authMiddleware, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), getTodayAttendance);
 
-router.get( "/:employeeId/history", authMiddleware, authorizeRoles("admin", "hr"), getEmployeeAttendanceHistory);
+router.get( "/:employeeId/history", authMiddleware, authorizeRoles("admin", "manager"),authorizeDepartment("HR"),  getEmployeeAttendanceHistory);
 
 export default router;

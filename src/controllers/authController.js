@@ -82,7 +82,7 @@ export const register = async (req, res) => {
         await invitation.save();
 
         // Optional: generate login token immediately
-        const tokenJwt = generateToken(user._id);
+        const tokenJwt = generateToken(user);
 
         res.cookie("token", tokenJwt, {
             httpOnly: true,
@@ -91,15 +91,16 @@ export const register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        return res.status(201).json({
+        res.status(200).json({
             success: true,
-            message: "Registration successful.",
+            message: "Login Successful",
             user: {
                 id: user._id,
-                employeeId: user.employeeId,
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                department: user.department,
+                firstLogin: user.firstLogin,
             },
         });
 
@@ -114,7 +115,6 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-
     try {
 
         const { email, password } = req.body;
@@ -122,7 +122,7 @@ export const login = async (req, res) => {
         const user = await User.findOne({
             email,
             isDeleted: false,
-        });
+        }).populate("department", "name code");
 
         if (!user) {
             return res.status(404).json({
@@ -132,13 +132,16 @@ export const login = async (req, res) => {
         }
 
         if (user.status === "inactive") {
-            return res.status(403).json({ 
-                success : false,
-                message: "Account is inactive" 
+            return res.status(403).json({
+                success: false,
+                message: "Account is inactive",
             });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
 
         if (!isMatch) {
             return res.status(400).json({
@@ -147,7 +150,7 @@ export const login = async (req, res) => {
             });
         }
 
-        const token = generateToken(user._id);
+        const token = generateToken(user);
 
         res.cookie("token", token, {
             httpOnly: true,
@@ -159,12 +162,17 @@ export const login = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Login Successful",
+
             user: {
                 id: user._id,
                 fullName: user.fullName,
                 role: user.role,
                 firstLogin: user.firstLogin,
-                token: token
+
+                // ⭐ THIS WAS MISSING
+                department: user.department,
+
+                token: token,
             },
         });
 
@@ -176,7 +184,6 @@ export const login = async (req, res) => {
         });
 
     }
-
 };
 
 
@@ -196,8 +203,8 @@ export const logout = (req, res) => {
 
 
 export const getCurrentUser = async (req, res) => {
-  res.status(200).json({
-    success: true,
-    user: req.user,
-  });
+    res.status(200).json({
+        success: true,
+        user: req.user,
+    });
 };

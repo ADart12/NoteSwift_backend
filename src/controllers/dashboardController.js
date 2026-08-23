@@ -9,7 +9,7 @@ export const getDashboardSummary = async (req, res) => {
 
     const [totalEmployees, presentToday,] = await Promise.all([
       User.countDocuments({
-        role: { $in: ["employee", "hr", "admin"] },
+        role: { $in: ["employee", "manager", "admin"] },
         status: "active",
       }),
 

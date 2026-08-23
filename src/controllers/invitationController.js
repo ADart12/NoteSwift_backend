@@ -7,13 +7,14 @@ import { resend } from "../cofig/resend.js";
 
 
 
+
 export const sendInvitation = async (req, res) => {
   try {
     const {
       fullName,
       email,
       phone,
-      department,
+      departmentId,
       designation,
       role,
     } = req.body;
@@ -40,11 +41,14 @@ export const sendInvitation = async (req, res) => {
       });
     }
 
+    console.log(departmentId)
+
     // Find department
     const departmentData = await Department.findOne({
-      name: department,
+      _id: departmentId,
       status: "Active",
     });
+
 
     if (!departmentData) {
       return res.status(400).json({
@@ -68,7 +72,10 @@ export const sendInvitation = async (req, res) => {
       fullName,
       email,
       phone,
-      department,
+
+      // Store Department ObjectId
+      department: departmentData._id,
+      
       designation,
       role,
       token,
@@ -122,7 +129,7 @@ export const validateInvitation = async (req, res) => {
     const invitation = await Invitation.findOne({
       token,
       used: false,
-    });
+    }).populate("department", "name code");
 
     if (!invitation) {
       return res.status(404).json({
@@ -138,18 +145,24 @@ export const validateInvitation = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
+
       employeeId: invitation.employeeId,
       fullName: invitation.fullName,
       email: invitation.email,
       phone: invitation.phone,
+
       department: invitation.department,
+
       designation: invitation.designation,
       role: invitation.role,
     });
+
   } catch (error) {
-    res.status(500).json({
+    console.error("Validate invitation error:", error);
+
+    return res.status(500).json({
       success: false,
       message: "Server Error",
     });

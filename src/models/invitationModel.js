@@ -30,7 +30,8 @@ const invitationSchema = new mongoose.Schema(
     },
 
     department: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
       required: true,
     },
 
@@ -41,7 +42,7 @@ const invitationSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "hr", "employee"],
+      enum: ["admin", "manager", "employee"],
       default: "employee",
     },
 

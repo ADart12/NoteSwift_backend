@@ -168,8 +168,6 @@ export const deleteLeave = async (req, res) => {
 };
 
 
-
-
 export const getAllLeaves = async (req, res) => {
     try {
         const {
@@ -196,48 +194,48 @@ export const getAllLeaves = async (req, res) => {
         }
 
         // =========================
-        // Employee Department Filter
+        // Employee Filters
         // =========================
+
+        const employeeFilter = {};
+
+        // Department ID
         if (department) {
-            const employees = await User.find({
-                department: department,
-            }).select("_id");
-
-            const employeeIds = employees.map(
-                (employee) => employee._id
-            );
-
-            filter.employee = {
-                $in: employeeIds,
-            };
+            employeeFilter.department = department;
         }
 
-        // =========================
         // Search Employee
-        // =========================
         if (search) {
-            const employees = await User.find({
-                $or: [
-                    {
-                        fullName: {
-                            $regex: search,
-                            $options: "i",
-                        },
+            employeeFilter.$or = [
+                {
+                    fullName: {
+                        $regex: search,
+                        $options: "i",
                     },
-                    {
-                        employeeId: {
-                            $regex: search,
-                            $options: "i",
-                        },
+                },
+                {
+                    employeeId: {
+                        $regex: search,
+                        $options: "i",
                     },
-                    {
-                        email: {
-                            $regex: search,
-                            $options: "i",
-                        },
+                },
+                {
+                    email: {
+                        $regex: search,
+                        $options: "i",
                     },
-                ],
-            }).select("_id");
+                },
+            ];
+        }
+
+        // Only query User if department/search exists
+        if (
+            department ||
+            search
+        ) {
+            const employees = await User.find(
+                employeeFilter
+            ).select("_id");
 
             const employeeIds = employees.map(
                 (employee) => employee._id
@@ -251,11 +249,16 @@ export const getAllLeaves = async (req, res) => {
         // =========================
         // Get Leaves
         // =========================
+
         const leaves = await Leave.find(filter)
-            .populate(
-                "employee",
-                "fullName email department designation"
-            )
+            .populate({
+                path: "employee",
+                select: "fullName email department designation",
+                populate: {
+                    path: "department",
+                    select: "name code",
+                },
+            })
             .sort({ createdAt: -1 });
 
         return res.status(200).json({

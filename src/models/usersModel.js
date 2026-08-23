@@ -30,9 +30,9 @@ const userSchema = new mongoose.Schema(
     },
 
     department: {
-      type: String,
-      required: true,
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+      default: null,
     },
 
     designation: {
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["admin", "hr", "employee"],
+      enum: ["admin", "manager", "employee"],
       default: "employee",
     },
 
@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
     },
 
     joiningDate: {
-      type:   Date,
+      type: Date,
       default: Date.now,
     },
 
@@ -67,8 +67,8 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
-    
-     isDeleted: {
+
+    isDeleted: {
       type: Boolean,
       default: false,
     },

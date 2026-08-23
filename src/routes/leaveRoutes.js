@@ -12,6 +12,7 @@ import {
 } from "../controllers/leaveController.js";
 import protect from "../middleware/authMiddleware.js";
 import {authorizeRoles} from "../middleware/authorizeRole.js";
+import { authorizeDepartment } from "../middleware/authorizeDepartment.js";
 
 const router = express.Router();
 
@@ -27,15 +28,15 @@ router.delete("/:id",protect, authorizeRoles("employee"), deleteLeave);
 
 
 // HR/Admin Routes
-router.get("/",protect, authorizeRoles("admin", "hr"), getAllLeaves);
+router.get("/",protect, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), getAllLeaves);
 
-router.get("/summary",protect, authorizeRoles("admin", "hr"), getLeaveSummary);
+router.get("/summary",protect, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), getLeaveSummary);
 
-router.get("/:id",protect,authorizeRoles("admin", "hr"),getLeaveById);
+router.get("/:id",protect,authorizeRoles("admin", "manager"), authorizeDepartment("HR") , getLeaveById);
 
-router.patch("/:id/approve", protect, authorizeRoles("admin", "hr"), approveLeave);
+router.patch("/:id/approve", protect, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), approveLeave);
 
-router.patch("/:id/reject", protect, authorizeRoles("admin", "hr"), rejectLeave);
+router.patch("/:id/reject", protect, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), rejectLeave);
 
 
 export default router;
