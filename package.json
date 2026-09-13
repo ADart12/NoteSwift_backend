@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.4",
     "nepali-date-converter": "^3.4.0",
+    "node-cron": "^4.6.0",
     "nodemon": "^3.1.14",
     "resend": "^6.17.2"
   }

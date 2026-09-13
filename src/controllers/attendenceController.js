@@ -314,3 +314,126 @@ export const getEmployeeAttendanceHistory = async (req, res) => {
     });
   }
 };
+
+
+export const getMyAttendanceSummary = async (req, res) => {
+  try {
+    const employeeId = req.user._id;
+    const { month = "2026-08" } = req.query;
+
+    const [year, monthNumber] = month.split("-").map(Number);
+
+    const startDate = new Date(year, monthNumber - 1, 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(year, monthNumber, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    const attendance = await Attendance.find({
+      employee: employeeId,
+      dateAD: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+    });
+
+    const present = attendance.filter(
+      (item) => item.status === "Present"
+    ).length;
+
+    const late = attendance.filter(
+      (item) => item.isLate === true
+    ).length;
+
+    /*
+      IMPORTANT:
+      Absent tabhi calculate kar sakte hain jab tumhare DB
+      mein absent attendance records create hote hain.
+    */
+    const absent = attendance.filter(
+      (item) => item.status === "Absent"
+    ).length;
+
+    const workingDays = attendance.length;
+
+    const attendancePercentage =
+      workingDays > 0
+        ? Math.round((present / workingDays) * 100)
+        : 0;
+
+    return res.status(200).json({
+      success: true,
+      month,
+      summary: {
+        present,
+        absent,
+        late,
+        workingDays,
+        attendancePercentage,
+      },
+    });
+  } catch (error) {
+    console.error("Get My Attendance Summary Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+export const markAbsentEmployees = async () => {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const users = await User.find({
+      isActive: true,
+    });
+
+    for (const user of users) {
+      const existingAttendance = await Attendance.findOne({
+        employee: user._id,
+        dateAD: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      });
+
+      if (!existingAttendance) {
+        await Attendance.create({
+          employee: user._id,
+          dateAD: startOfDay,
+          dateBS: nepaliDate(startOfDay),
+          status: "Absent",
+          checkIn: null,
+          checkOut: null,
+          workingHours: 0,
+          overtime: 0,
+        });
+      }
+      console.log("✅ CREATED:", created._id);
+    }
+
+    console.log("Absent employees marked successfully");
+  } catch (error) {
+    console.error("Mark Absent Error:", error);
+  }
+};
+ 
+
+export const markAbsentEmployeesController = async (req, res) => {
+  try {
+    const result = await markAbsentEmployees();
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

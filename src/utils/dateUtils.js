@@ -82,9 +82,29 @@ export const getDateRange = (range = "1w") => {
   const endDate = new Date();
   endDate.setHours(23, 59, 59, 999);
 
+  // YYYY-MM => full selected month
+  if (/^\d{4}-\d{2}$/.test(range)) {
+    const [year, month] = range.split("-").map(Number);
+
+    const startDate = new Date(year, month - 1, 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(year, month, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    return {
+      startDate,
+      endDate,
+    };
+  }
+
   const startDate = new Date(endDate);
 
   switch (range) {
+    case "2w":
+      startDate.setDate(startDate.getDate() - 14);
+      break;
+
     case "1m":
       startDate.setMonth(startDate.getMonth() - 1);
       break;
@@ -101,5 +121,8 @@ export const getDateRange = (range = "1w") => {
 
   startDate.setHours(0, 0, 0, 0);
 
-  return { startDate, endDate };
+  return {
+    startDate,
+    endDate,
+  };
 };

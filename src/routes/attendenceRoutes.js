@@ -5,7 +5,10 @@ import {
   getTodayAttendance,
   getMyAttendance,
   getMyAttendanceHistory,
-  getEmployeeAttendanceHistory
+  getEmployeeAttendanceHistory,
+  getMyAttendanceSummary,
+  markAbsentEmployeesController,
+  
 } from "../controllers/attendenceController.js";
 
 import authMiddleware from "../middleware/authMiddleware.js";
@@ -22,6 +25,12 @@ router.get("/me", authMiddleware, getMyAttendance);
 
 router.get("/me/history", authMiddleware, getMyAttendanceHistory);
 
+router.get("/my/summary", authMiddleware, getMyAttendanceSummary);
+
+router.post("/mark-absent", markAbsentEmployeesController);
+
+
+
 /* ============================
    HR / Admin Routes
 ============================ */
@@ -34,5 +43,6 @@ router.patch("/check-out", authMiddleware, authorizeRoles("admin", "manager"),au
 router.get("/today", authMiddleware, authorizeRoles("admin", "manager"), authorizeDepartment("HR"), getTodayAttendance);
 
 router.get( "/:employeeId/history", authMiddleware, authorizeRoles("admin", "manager"),authorizeDepartment("HR"),  getEmployeeAttendanceHistory);
+
 
 export default router;

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import app from './src/app.js';
 import { connectDB } from './src/cofig/dbConfig.js';
+import "./src/scheduler/attendenceScheduler.js";
 
 connectDB();
 
