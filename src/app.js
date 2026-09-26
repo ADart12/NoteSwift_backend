@@ -8,6 +8,7 @@ import attendenceRoutes from './routes/attendenceRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import leaveRoutes from "./routes/leaveRoutes.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
+import profileRoutes from "./routes/profile/profileRoutes.js"
 
 const app = express();
 
@@ -35,5 +36,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/leave", leaveRoutes)
 
 app.use("/api/department", departmentRoutes)
+
+//profile
+app.use("/api/profile", profileRoutes);
 
 export default app;

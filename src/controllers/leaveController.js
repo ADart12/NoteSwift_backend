@@ -74,14 +74,34 @@ export const getMyLeaves = async (req, res) => {
     try {
         const employee = req.user.id;
 
+        // Pagination
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        // Total leaves
+        const totalLeaves = await Leave.countDocuments({ employee });
+
+        // Get leaves
         const leaves = await Leave.find({ employee })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalPages = Math.ceil(totalLeaves / limit);
 
         return res.status(200).json({
             success: true,
             count: leaves.length,
             leaves,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalLeaves,
+                limit
+            }
         });
+
     } catch (error) {
         console.error("Get My Leaves Error:", error);
 

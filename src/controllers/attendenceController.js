@@ -382,6 +382,8 @@ export const getMyAttendanceSummary = async (req, res) => {
   }
 };
 
+
+
 export const markAbsentEmployees = async () => {
   try {
     const startOfDay = new Date();
@@ -391,10 +393,16 @@ export const markAbsentEmployees = async () => {
     endOfDay.setHours(23, 59, 59, 999);
 
     const users = await User.find({
-      isActive: true,
+      status: "active",
+      isDeleted : false
     });
 
+    console.log("🔥 USERS LENGTH:", users.length);
+    console.log("🔥 USERS:", users);
+
     for (const user of users) {
+      console.log("🔄 PROCESSING USER:", user._id);
+
       const existingAttendance = await Attendance.findOne({
         employee: user._id,
         dateAD: {
@@ -403,8 +411,10 @@ export const markAbsentEmployees = async () => {
         },
       });
 
+      console.log("📋 EXISTING ATTENDANCE:", existingAttendance);
+
       if (!existingAttendance) {
-        await Attendance.create({
+        const created = await Attendance.create({
           employee: user._id,
           dateAD: startOfDay,
           dateBS: nepaliDate(startOfDay),
@@ -414,22 +424,37 @@ export const markAbsentEmployees = async () => {
           workingHours: 0,
           overtime: 0,
         });
+
+        console.log("✅ CREATED:", created._id);
+      } else {
+        console.log("ℹ️ ALREADY EXISTS:", user._id);
       }
-      console.log("✅ CREATED:", created._id);
     }
 
     console.log("Absent employees marked successfully");
+
+    return {
+      success: true,
+      message: "Absent employees marked successfully",
+    };
+
   } catch (error) {
     console.error("Mark Absent Error:", error);
+
+    return {
+      success: false,
+      message: error.message,
+    };
   }
 };
- 
+
 
 export const markAbsentEmployeesController = async (req, res) => {
   try {
     const result = await markAbsentEmployees();
 
     return res.status(200).json(result);
+
   } catch (error) {
     return res.status(500).json({
       success: false,
